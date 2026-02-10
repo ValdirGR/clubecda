@@ -77,8 +77,8 @@ export default function ProfissionalPontosPage() {
                 pontos.map((p) => (
                   <tr key={p.id} className="border-b border-dark-800 hover:bg-dark-700/30">
                     <td className="px-4 py-3 text-dark-300">{formatDate(p.data || null)}</td>
-                    <td className="px-4 py-3 font-semibold text-brand-400">+{p.pontos}</td>
-                    <td className="px-4 py-3 text-dark-300">{p.valor || '-'}</td>
+                    <td className="px-4 py-3 font-semibold text-brand-400">+{Number(p.pontos)}</td>
+                    <td className="px-4 py-3 text-dark-300">{p.valor != null ? Number(p.valor) : '-'}</td>
                     <td className="px-4 py-3 text-dark-400 truncate max-w-[250px]">{p.nota || '-'}</td>
                   </tr>
                 ))

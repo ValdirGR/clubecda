@@ -65,7 +65,7 @@ export default async function ProfissionalDashboard() {
                   {p.data ? new Date(p.data).toLocaleDateString('pt-BR') : '-'}
                 </div>
                 <div className="text-sm font-semibold text-brand-400">
-                  +{p.pontos} pts
+                  +{Number(p.pontos)} pts
                 </div>
               </div>
             ))}
