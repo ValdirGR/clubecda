@@ -7,6 +7,10 @@ const nextConfig = {
         hostname: 'www.clubecda.com.br',
         pathname: '/2018/img_mod/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
     ],
   },
   // Permitir conexão com MySQL externo em serverless

@@ -35,7 +35,29 @@ async function getHomeData() {
     }),
   ]);
 
-  return { slides: [] as { id: number; titulo: string; subtitulo?: string; imagem: string; link?: string }[], empresas, noticias };
+  return { slides: [
+    {
+      id: 1,
+      titulo: 'Clube da Decoração e Arquitetura',
+      subtitulo: 'Conectando profissionais e empresas com benefícios exclusivos.',
+      imagem: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=80&auto=format&fit=crop',
+      link: '/cadastro',
+    },
+    {
+      id: 2,
+      titulo: 'Ambientes que Inspiram',
+      subtitulo: 'Descubra as melhores empresas de decoração e acabamentos.',
+      imagem: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1920&q=80&auto=format&fit=crop',
+      link: '/empresas',
+    },
+    {
+      id: 3,
+      titulo: 'Programa de Fidelidade',
+      subtitulo: 'Acumule pontos em suas compras e troque por prêmios exclusivos.',
+      imagem: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=80&auto=format&fit=crop',
+      link: '/o-clube',
+    },
+  ], empresas, noticias };
 }
 
 export default async function HomePage() {
