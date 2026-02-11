@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 
 export const authOptions: NextAuthOptions = {
@@ -93,13 +94,35 @@ export const authOptions: NextAuthOptions = {
               },
             });
             if (admin && admin.usuario_senha) {
-              // Tenta bcrypt primeiro, fallback para comparação direta (migração)
+              const dbPassword = admin.usuario_senha;
               let senhaValida = false;
-              try {
-                senhaValida = await bcrypt.compare(senha, admin.usuario_senha);
-              } catch {
-                // Se falhar o bcrypt (hash inválido), tenta comparação direta
-                senhaValida = admin.usuario_senha === senha;
+
+              // 1. Tenta bcrypt (se a senha começar com $2)
+              if (dbPassword.startsWith('$2')) {
+                try {
+                  senhaValida = await bcrypt.compare(senha, dbPassword);
+                } catch (e) {
+                  console.error('Bcrypt error:', e);
+                }
+              }
+
+              // 2. Se não válido, tenta validação MySQL PASSWORD() -> SHA1(SHA1(pass))
+              // Formato: *HEXADECIMAL_UPPERCASE
+              if (!senhaValida && dbPassword.startsWith('*')) {
+                try {
+                  const shasum = crypto.createHash('sha1').update(senha).digest();
+                  const shasum2 = crypto.createHash('sha1').update(shasum).digest('hex').toUpperCase();
+                  const mysqlHash = '*' + shasum2;
+                  senhaValida = (mysqlHash === dbPassword);
+                } catch (e) {
+                  console.error('MySQL hash error:', e);
+                }
+              }
+
+              // 3. Se ainda não válido, tenta Texto Plano (Legacy)
+              // Útil durante a migração para usuários antigos sem hash
+              if (!senhaValida) {
+                senhaValida = (dbPassword === senha);
               }
 
               if (senhaValida) {
