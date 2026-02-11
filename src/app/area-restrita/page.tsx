@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { LogIn, Loader2, Building2, User2, Briefcase } from 'lucide-react';
+import { LogIn, Loader2, Building2, User2, Briefcase, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/Animations';
 
@@ -22,6 +22,7 @@ const tipoOptions = [
   { value: 'EM', label: 'Empresa', icon: Building2 },
   { value: 'ES', label: 'Escritório', icon: Briefcase },
   { value: 'PR', label: 'Profissional', icon: User2 },
+  { value: 'ADMIN', label: 'Administração', icon: ShieldCheck },
 ] as const;
 
 export default function AreaRestritaPage() {
@@ -44,6 +45,7 @@ export default function AreaRestritaPage() {
     if (role === 'empresa') router.push('/area-restrita/empresas');
     else if (role === 'escritorio') router.push('/area-restrita/escritorios');
     else if (role === 'profissional') router.push('/area-restrita/profissionais');
+    else if (role === 'admin' || role === 'user') router.push('/admin');
     else router.push('/');
     return null;
   }
