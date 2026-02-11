@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 
 export const authOptions: NextAuthOptions = {
@@ -91,15 +92,37 @@ export const authOptions: NextAuthOptions = {
                 usuario_user: usuario,
               },
             });
-            // Nota: o sistema original usa MySQL PASSWORD() — aqui fazemos comparação simples
-            // Em produção, migrar para bcrypt
-            if (admin && admin.usuario_senha === senha) {
-              return {
-                id: String(admin.usuario_id),
-                name: admin.usuario_nome || 'Admin',
-                email: `admin-${admin.usuario_id}@cda.local`,
-                role: admin.usuario_tipo || 'admin',
-              };
+            if (admin && admin.usuario_senha) {
+              // Tenta bcrypt primeiro, fallback para comparação direta (migração)
+              let senhaValida = false;
+              try {
+                senhaValida = await bcrypt.compare(senha, admin.usuario_senha);
+              } catch {
+                // Se falhar o bcrypt (hash inválido), tenta comparação direta
+                senhaValida = admin.usuario_senha === senha;
+              }
+
+              if (senhaValida) {
+                // Registrar log de acesso (como o PHP original fazia)
+                try {
+                  await prisma.casLogAcesso.create({
+                    data: {
+                      log_acesso_usuario: admin.usuario_id,
+                      log_acesso_login: new Date(),
+                      log_acesso_IP: '0.0.0.0', // IP real via headers no middleware
+                    },
+                  });
+                } catch (logError) {
+                  console.error('Erro ao registrar log de acesso:', logError);
+                }
+
+                return {
+                  id: String(admin.usuario_id),
+                  name: admin.usuario_nome || 'Admin',
+                  email: `admin-${admin.usuario_id}@cda.local`,
+                  role: admin.usuario_tipo || 'admin',
+                };
+              }
             }
           }
 

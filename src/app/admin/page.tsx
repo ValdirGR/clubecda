@@ -42,6 +42,7 @@ export default async function AdminDashboard() {
     { label: 'Notícias', description: 'Publicar e gerenciar notícias', icon: Newspaper, href: '/admin/noticias' },
     { label: 'Pontos', description: 'Gerenciar programa de pontos', icon: Star, href: '/admin/pontos' },
     { label: 'Relatórios', description: 'Visualizar relatórios do sistema', icon: BarChart3, href: '/admin/relatorios' },
+    { label: 'CAS', description: 'Centro de Administração: usuários, acessos e relatórios', icon: Settings, href: '/admin/cas' },
   ];
 
   return (

@@ -5,8 +5,8 @@ export default withAuth({
     authorized: ({ token, req }) => {
       const path = req.nextUrl.pathname;
 
-      // Admin routes require admin role
-      if (path.startsWith('/admin')) {
+      // Admin routes and CAS API require admin/user role
+      if (path.startsWith('/admin') || path.startsWith('/api/cas')) {
         return token?.role === 'admin' || token?.role === 'user';
       }
 
@@ -30,5 +30,6 @@ export const config = {
     '/area-restrita/escritorios/:path*',
     '/area-restrita/profissionais/:path*',
     '/admin/:path*',
+    '/api/cas/:path*',
   ],
 };
