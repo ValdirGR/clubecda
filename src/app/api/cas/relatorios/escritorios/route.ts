@@ -25,72 +25,89 @@ export async function GET(req: NextRequest) {
     const fim = new Date(dataFim);
     fim.setHours(23, 59, 59, 999);
 
-    // Buscar escritórios de interesse
-    let escritorios;
+    // Build WHERE conditions for pontos
+    const pontosWhere: any = {
+      tipo: { in: ['2', 'ES'] },
+      data: { gte: inicio, lte: fim },
+    };
+
     if (escritorioId && escritorioId !== 'todos') {
-      escritorios = await prisma.escritorio.findMany({
-        where: { id: parseInt(escritorioId) },
-        select: { id: true, empresa: true, nome_fantasia: true },
-      });
-    } else {
-      escritorios = await prisma.escritorio.findMany({
-        where: { ativo: 's' },
-        orderBy: { empresa: 'asc' },
-        select: { id: true, empresa: true, nome_fantasia: true },
-      });
+      pontosWhere.id_profissional = parseInt(escritorioId);
     }
 
-    const resultado = await Promise.all(
-      escritorios.map(async (esc) => {
-        const pontos = await prisma.ponto.findMany({
-          where: {
-            id_profissional: esc.id,
-            tipo: { in: ['2', 'ES'] },
-            data: { gte: inicio, lte: fim },
-          },
-          include: {
-            empresaRel: { select: { id: true, empresa: true } },
-          },
-          orderBy: { id: 'asc' },
+    // Single query: fetch all matching pontos at once
+    const pontos = await prisma.ponto.findMany({
+      where: pontosWhere,
+      include: {
+        empresaRel: { select: { id: true, empresa: true } },
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    // Fetch escritorio names for all relevant IDs in a single query
+    const escIds = [...new Set(pontos.map((p) => p.id_profissional).filter(Boolean))] as number[];
+    const escritorios = escIds.length > 0
+      ? await prisma.escritorio.findMany({
+          where: { id: { in: escIds } },
+          select: { id: true, empresa: true, nome_fantasia: true },
+        })
+      : [];
+    const escMap = new Map(escritorios.map((e) => [e.id, e]));
+
+    // Group pontos by escritorio
+    const grupoMap = new Map<number, {
+      escritorioId: number;
+      escritorioNome: string;
+      nomeFantasia?: string;
+      totalValor: number;
+      totalPontos: number;
+      operacoes: any[];
+    }>();
+
+    for (const p of pontos) {
+      const escId = p.id_profissional || 0;
+      if (!grupoMap.has(escId)) {
+        const esc = escMap.get(escId);
+        grupoMap.set(escId, {
+          escritorioId: escId,
+          escritorioNome: esc?.empresa || `Escritório #${escId}`,
+          nomeFantasia: esc?.nome_fantasia || undefined,
+          totalValor: 0,
+          totalPontos: 0,
+          operacoes: [],
         });
+      }
+      const grupo = grupoMap.get(escId)!;
+      grupo.totalValor += Number(p.valor) || 0;
+      grupo.totalPontos += Number(p.pontos) || 0;
 
-        const totalValor = pontos.reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
-        const totalPontos = pontos.reduce((acc, p) => acc + (Number(p.pontos) || 0), 0);
+      if (tipo === 'detalhado') {
+        grupo.operacoes.push({
+          id: p.id,
+          data: p.data,
+          empresaId: p.id_empresa,
+          empresaNome: p.empresaRel?.empresa || 'N/A',
+          valor: Number(p.valor) || 0,
+          pontos: Number(p.pontos) || 0,
+          nota: p.nota || '',
+        });
+      }
+    }
 
-        return {
-          escritorioId: esc.id,
-          escritorioNome: esc.empresa,
-          nomeFantasia: esc.nome_fantasia,
-          totalValor,
-          totalPontos,
-          operacoes: tipo === 'detalhado'
-            ? pontos.map((p) => ({
-                id: p.id,
-                data: p.data,
-                empresaId: p.id_empresa,
-                empresaNome: p.empresaRel?.empresa || 'N/A',
-                valor: Number(p.valor) || 0,
-                pontos: Number(p.pontos) || 0,
-                nota: p.nota || '',
-              }))
-            : [],
-        };
-      })
+    const resultado = Array.from(grupoMap.values()).sort((a, b) =>
+      (a.escritorioNome || '').localeCompare(b.escritorioNome || '', 'pt-BR')
     );
 
-    // Filtrar escritórios sem pontos
-    const comPontos = resultado.filter((e) => e.totalPontos > 0 || e.totalValor > 0);
-
     const totalGeral = {
-      valor: comPontos.reduce((acc, e) => acc + e.totalValor, 0),
-      pontos: comPontos.reduce((acc, e) => acc + e.totalPontos, 0),
-      registros: comPontos.reduce((acc, e) => acc + e.operacoes.length, 0),
+      valor: resultado.reduce((acc, e) => acc + e.totalValor, 0),
+      pontos: resultado.reduce((acc, e) => acc + e.totalPontos, 0),
+      registros: pontos.length,
     };
 
     return NextResponse.json({
       tipo,
       periodo: { inicio: dataInicio, fim: dataFim },
-      escritorios: comPontos,
+      escritorios: resultado,
       totalGeral,
     });
   } catch (error) {

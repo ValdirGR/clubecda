@@ -159,18 +159,6 @@ export default function CasRelatoriosPage() {
 
   // Buscar opções de seletores
   useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const [empRes, escRes, profRes] = await Promise.all([
-          fetch('/api/cas/relatorios/empresas?dataInicio=2000-01-01&dataFim=2000-01-02&tipo=simplificado'),
-          fetch('/api/cas/relatorios/escritorios?dataInicio=2000-01-01&dataFim=2000-01-02&tipo=simplificado'),
-          fetch('/api/cas/relatorios/profissionais?dataInicio=2000-01-01&dataFim=2000-01-02&tipo=simplificado'),
-        ]);
-        // We just need the select options, not the actual report data
-      } catch {}
-    };
-
-    // Fetch entity lists for selectors
     const fetchEntities = async () => {
       try {
         const res = await fetch('/api/cas/relatorios/entidades');

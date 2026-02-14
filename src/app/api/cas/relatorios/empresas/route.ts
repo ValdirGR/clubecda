@@ -44,45 +44,62 @@ export async function GET(req: NextRequest) {
       orderBy: { id: 'asc' },
     });
 
-    // Enriquecer com dados de profissional/escritório
-    const pontosEnriquecidos = await Promise.all(
-      pontos.map(async (p) => {
-        let profissionalNome = '';
-        let tipoLabel = '';
+    // Batch-fetch all profissional and escritorio names in 2 queries
+    const profIds: number[] = [];
+    const escIds: number[] = [];
+    for (const p of pontos) {
+      if (!p.id_profissional) continue;
+      if (p.tipo === '1' || p.tipo === 'PR') profIds.push(p.id_profissional);
+      else if (p.tipo === '2' || p.tipo === 'ES') escIds.push(p.id_profissional);
+    }
 
-        if (p.id_profissional) {
-          if (p.tipo === '1' || p.tipo === 'PR') {
-            const prof = await prisma.profissional.findUnique({
-              where: { id: p.id_profissional },
-              select: { id: true, nome: true },
-            });
-            profissionalNome = prof?.nome || 'N/A';
-            tipoLabel = 'Profissional';
-          } else if (p.tipo === '2' || p.tipo === 'ES') {
-            const esc = await prisma.escritorio.findUnique({
-              where: { id: p.id_profissional },
-              select: { id: true, empresa: true },
-            });
-            profissionalNome = esc?.empresa || 'N/A';
-            tipoLabel = 'Escritório';
-          }
+    const [profissionais, escritorios] = await Promise.all([
+      profIds.length > 0
+        ? prisma.profissional.findMany({
+            where: { id: { in: [...new Set(profIds)] } },
+            select: { id: true, nome: true },
+          })
+        : Promise.resolve([]),
+      escIds.length > 0
+        ? prisma.escritorio.findMany({
+            where: { id: { in: [...new Set(escIds)] } },
+            select: { id: true, empresa: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const profMap = new Map(profissionais.map((p) => [p.id, p.nome]));
+    const escMap = new Map(escritorios.map((e) => [e.id, e.empresa]));
+
+    // Enrich pontos with names
+    const pontosEnriquecidos = pontos.map((p) => {
+      let profissionalNome = '';
+      let tipoLabel = '';
+
+      if (p.id_profissional) {
+        if (p.tipo === '1' || p.tipo === 'PR') {
+          profissionalNome = profMap.get(p.id_profissional) || 'N/A';
+          tipoLabel = 'Profissional';
+        } else if (p.tipo === '2' || p.tipo === 'ES') {
+          profissionalNome = escMap.get(p.id_profissional) || 'N/A';
+          tipoLabel = 'Escritório';
         }
+      }
 
-        return {
-          id: p.id,
-          data: p.data,
-          empresaId: p.id_empresa,
-          empresaNome: p.empresaRel?.empresa || 'N/A',
-          profissionalId: p.id_profissional,
-          profissionalNome,
-          tipo: tipoLabel,
-          valor: Number(p.valor) || 0,
-          pontos: Number(p.pontos) || 0,
-          nota: p.nota || '',
-          status: p.status || '',
-        };
-      })
-    );
+      return {
+        id: p.id,
+        data: p.data,
+        empresaId: p.id_empresa,
+        empresaNome: p.empresaRel?.empresa || 'N/A',
+        profissionalId: p.id_profissional,
+        profissionalNome,
+        tipo: tipoLabel,
+        valor: Number(p.valor) || 0,
+        pontos: Number(p.pontos) || 0,
+        nota: p.nota || '',
+        status: p.status || '',
+      };
+    });
 
     // Agrupar por empresa
     const porEmpresa: Record<string, {
