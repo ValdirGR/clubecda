@@ -261,10 +261,57 @@ export default function EmpresaPontosPage() {
     }
   }
 
-  // Excluir ponto
-  async function handleDelete(pontoId: number) {
-    if (!confirm('Tem certeza que deseja excluir este ponto? Esta ação não pode ser desfeita.')) return;
+  // Excluir ponto com dupla confirmação via toast
+  function handleDelete(pontoId: number) {
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <p className="font-semibold text-sm">⚠️ Excluir ponto #{pontoId}?</p>
+        <p className="text-xs text-gray-500">Esta ação não pode ser desfeita.</p>
+        <div className="flex gap-2 mt-1">
+          <button
+            className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:bg-red-600 transition-colors"
+            onClick={() => {
+              toast.dismiss(t.id);
+              // Segunda confirmação
+              toast((t2) => (
+                <div className="flex flex-col gap-2">
+                  <p className="font-semibold text-sm text-red-600">🚨 Confirmar exclusão definitiva?</p>
+                  <p className="text-xs text-gray-500">O ponto #{pontoId} será removido permanentemente e ficará registrado nos logs do sistema.</p>
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors"
+                      onClick={() => {
+                        toast.dismiss(t2.id);
+                        executeDelete(pontoId);
+                      }}
+                    >
+                      Sim, excluir definitivamente
+                    </button>
+                    <button
+                      className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                      onClick={() => toast.dismiss(t2.id)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ), { duration: 10000 });
+            }}
+          >
+            Sim, excluir
+          </button>
+          <button
+            className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    ), { duration: 10000 });
+  }
 
+  async function executeDelete(pontoId: number) {
     setDeleteLoading(pontoId);
     try {
       const res = await fetch(`/api/pontos/${pontoId}`, { method: 'DELETE' });
