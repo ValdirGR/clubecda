@@ -5,7 +5,7 @@ Projeto Next.js 14+ com App Router, Prisma ORM, NextAuth.js e Tailwind CSS.
 ## Pré-requisitos
 
 - Node.js 18+
-- MySQL (banco de dados existente `clubecda_2013`)
+- Banco de dados [Neon](https://neon.tech) (PostgreSQL serverless)
 - Conta na [Vercel](https://vercel.com) (para deploy)
 - API Key da [Resend](https://resend.com) (para envio de e-mails)
 
@@ -33,7 +33,8 @@ npm run dev
 
 Edite `.env.local` com:
 
-- `DATABASE_URL` – Connection string do MySQL remoto
+- `DATABASE_URL` – Connection string do Neon PostgreSQL (pooled)
+- `DIRECT_URL` – Connection string direta do Neon (para migrations)
 - `NEXTAUTH_URL` – URL do site (ex: http://localhost:3000)
 - `NEXTAUTH_SECRET` – Segredo para JWT (gere com `openssl rand -base64 32`)
 - `RESEND_API_KEY` – API key da Resend
@@ -70,7 +71,7 @@ Edite `.env.local` com:
 ## Tecnologias
 
 - **Next.js 14** – App Router, Server Components, API Routes
-- **Prisma** – ORM para MySQL
+- **Prisma** – ORM para PostgreSQL (Neon)
 - **NextAuth.js** – Autenticação multi-tipo
 - **Tailwind CSS** – Estilização com tema dark
 - **Framer Motion** – Animações suaves

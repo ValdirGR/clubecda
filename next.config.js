@@ -13,7 +13,7 @@ const nextConfig = {
       },
     ],
   },
-  // Permitir conexão com MySQL externo em serverless
+  // Permitir conexão com Neon PostgreSQL em serverless
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client'],
   },

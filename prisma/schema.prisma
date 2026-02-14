@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================================
@@ -232,7 +233,7 @@ model CasModulo {
   modulo_id          Int       @id @default(autoincrement())
   modulo_nome        String?   @db.VarChar(255)
   modulo_nivel       String?   @db.VarChar(10)
-  modulo_atualizacao DateTime? @db.DateTime(0)
+  modulo_atualizacao DateTime? @db.Timestamp(0)
 
   acessos CasAcessoMod[]
 
@@ -242,7 +243,7 @@ model CasModulo {
 model CasAcessoMod {
   usuario_id         Int
   modulo_id          Int
-  acesso_atualizacao DateTime? @db.DateTime(0)
+  acesso_atualizacao DateTime? @db.Timestamp(0)
 
   usuario CasUsuario @relation(fields: [usuario_id], references: [usuario_id])
   modulo  CasModulo  @relation(fields: [modulo_id], references: [modulo_id])
@@ -254,8 +255,8 @@ model CasAcessoMod {
 model CasLogAcesso {
   log_acesso_id      Int       @id @default(autoincrement())
   log_acesso_usuario Int?
-  log_acesso_login   DateTime? @db.DateTime(0)
-  log_acesso_logout  DateTime? @db.DateTime(0)
+  log_acesso_login   DateTime? @db.Timestamp(0)
+  log_acesso_logout  DateTime? @db.Timestamp(0)
   log_acesso_IP      String?   @db.VarChar(45)
 
   usuario CasUsuario? @relation(fields: [log_acesso_usuario], references: [usuario_id])
