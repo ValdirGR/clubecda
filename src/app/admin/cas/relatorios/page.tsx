@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -17,6 +17,9 @@ import {
   Star,
   Calendar,
   TrendingUp,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -79,6 +82,80 @@ export default function CasRelatoriosPage() {
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+  // Ordenação
+  type SortField = 'nome' | 'valor' | 'pontos';
+  type SortDir = 'asc' | 'desc';
+  const [sortField, setSortField] = useState<SortField>('nome');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3.5 h-3.5 text-dark-600 ml-1 inline" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="w-3.5 h-3.5 text-brand-400 ml-1 inline" />
+      : <ArrowDown className="w-3.5 h-3.5 text-brand-400 ml-1 inline" />;
+  };
+
+  const sortedEmpresas = useMemo(() => {
+    if (!resultado?.empresas) return [];
+    const arr = [...(resultado.empresas as EmpresaRelatorio[])];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'nome') cmp = (a.empresaNome || '').localeCompare(b.empresaNome || '', 'pt-BR');
+      else if (sortField === 'valor') cmp = a.totalValor - b.totalValor;
+      else cmp = a.totalPontos - b.totalPontos;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [resultado?.empresas, sortField, sortDir]);
+
+  const sortedEscritorios = useMemo(() => {
+    if (!resultado?.escritorios) return [];
+    const arr = [...(resultado.escritorios as EscritorioRelatorio[])];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'nome') cmp = (a.escritorioNome || '').localeCompare(b.escritorioNome || '', 'pt-BR');
+      else if (sortField === 'valor') cmp = a.totalValor - b.totalValor;
+      else cmp = a.totalPontos - b.totalPontos;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [resultado?.escritorios, sortField, sortDir]);
+
+  const sortedProfissionais = useMemo(() => {
+    if (!resultado?.profissionais) return [];
+    const arr = [...(resultado.profissionais as ProfissionalRelatorio[])];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'nome') cmp = (a.profissionalNome || '').localeCompare(b.profissionalNome || '', 'pt-BR');
+      else if (sortField === 'valor') cmp = a.totalValor - b.totalValor;
+      else cmp = a.totalPontos - b.totalPontos;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [resultado?.profissionais, sortField, sortDir]);
+
+  const sortedOperacoes = useMemo(() => {
+    if (!resultado?.operacoes) return [];
+    const arr = [...(resultado.operacoes as Operacao[])];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'nome') cmp = (a.empresaNome || '').localeCompare(b.empresaNome || '', 'pt-BR');
+      else if (sortField === 'valor') cmp = a.valor - b.valor;
+      else cmp = a.pontos - b.pontos;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [resultado?.operacoes, sortField, sortDir]);
 
   // Buscar opções de seletores
   useEffect(() => {
@@ -381,12 +458,12 @@ export default function CasRelatoriosPage() {
                         {nivelDetalhe === 'detalhado' && (
                           <th className="px-4 py-3 text-dark-400 font-medium w-8"></th>
                         )}
-                        <th className="px-4 py-3 text-dark-400 font-medium">Empresa</th>
-                        <th className="px-4 py-3 text-dark-400 font-medium text-right">
-                          Valor (R$)
+                        <th className="px-4 py-3 text-dark-400 font-medium cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('nome')}>Empresa <SortIcon field="nome" /></th>
+                        <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('valor')}>
+                          Valor (R$) <SortIcon field="valor" />
                         </th>
-                        <th className="px-4 py-3 text-dark-400 font-medium text-right">
-                          Pontos
+                        <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('pontos')}>
+                          Pontos <SortIcon field="pontos" />
                         </th>
                         <th className="px-4 py-3 text-dark-400 font-medium text-right">
                           Pagamento
@@ -394,7 +471,7 @@ export default function CasRelatoriosPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(resultado.empresas as EmpresaRelatorio[]).map((emp) => (
+                      {sortedEmpresas.map((emp) => (
                         <>
                           <tr
                             key={emp.empresaId}
@@ -498,19 +575,19 @@ export default function CasRelatoriosPage() {
                         {nivelDetalhe === 'detalhado' && (
                           <th className="px-4 py-3 text-dark-400 font-medium w-8"></th>
                         )}
-                        <th className="px-4 py-3 text-dark-400 font-medium">
-                          Escritório
+                        <th className="px-4 py-3 text-dark-400 font-medium cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('nome')}>
+                          Escritório <SortIcon field="nome" />
                         </th>
-                        <th className="px-4 py-3 text-dark-400 font-medium text-right">
-                          Valor (R$)
+                        <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('valor')}>
+                          Valor (R$) <SortIcon field="valor" />
                         </th>
-                        <th className="px-4 py-3 text-dark-400 font-medium text-right">
-                          Pontos
+                        <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('pontos')}>
+                          Pontos <SortIcon field="pontos" />
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {(resultado.escritorios as EscritorioRelatorio[]).map(
+                      {sortedEscritorios.map(
                         (esc) => (
                           <>
                             <tr
@@ -603,19 +680,19 @@ export default function CasRelatoriosPage() {
                         {nivelDetalhe === 'detalhado' && (
                           <th className="px-4 py-3 text-dark-400 font-medium w-8"></th>
                         )}
-                        <th className="px-4 py-3 text-dark-400 font-medium">
-                          Profissional
+                        <th className="px-4 py-3 text-dark-400 font-medium cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('nome')}>
+                          Profissional <SortIcon field="nome" />
                         </th>
-                        <th className="px-4 py-3 text-dark-400 font-medium text-right">
-                          Valor (R$)
+                        <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('valor')}>
+                          Valor (R$) <SortIcon field="valor" />
                         </th>
-                        <th className="px-4 py-3 text-dark-400 font-medium text-right">
-                          Pontos
+                        <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('pontos')}>
+                          Pontos <SortIcon field="pontos" />
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {(resultado.profissionais as ProfissionalRelatorio[]).map(
+                      {sortedProfissionais.map(
                         (prof) => (
                           <>
                             <tr
@@ -711,8 +788,8 @@ export default function CasRelatoriosPage() {
                         <th className="px-4 py-3 text-dark-400 font-medium">
                           Data
                         </th>
-                        <th className="px-4 py-3 text-dark-400 font-medium">
-                          Empresa
+                        <th className="px-4 py-3 text-dark-400 font-medium cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('nome')}>
+                          Empresa <SortIcon field="nome" />
                         </th>
                         <th className="px-4 py-3 text-dark-400 font-medium">
                           Profissional/Escritório
@@ -720,16 +797,16 @@ export default function CasRelatoriosPage() {
                         <th className="px-4 py-3 text-dark-400 font-medium text-center">
                           Tipo
                         </th>
-                        <th className="px-4 py-3 text-dark-400 font-medium text-right">
-                          Valor
+                        <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('valor')}>
+                          Valor <SortIcon field="valor" />
                         </th>
-                        <th className="px-4 py-3 text-dark-400 font-medium text-right">
-                          Pontos
+                        <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('pontos')}>
+                          Pontos <SortIcon field="pontos" />
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {(resultado.operacoes as Operacao[]).map((op) => (
+                      {sortedOperacoes.map((op) => (
                         <tr
                           key={op.id}
                           className="border-b border-dark-800 hover:bg-dark-700/30"
