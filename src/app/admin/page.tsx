@@ -12,6 +12,7 @@ import {
   Newspaper,
   Settings,
   BarChart3,
+  CalendarDays,
 } from 'lucide-react';
 
 export default async function AdminDashboard() {
@@ -41,6 +42,7 @@ export default async function AdminDashboard() {
     { label: 'Profissionais', description: 'Gerenciar profissionais', icon: Users, href: '/admin/profissionais' },
     { label: 'Notícias', description: 'Publicar e gerenciar notícias', icon: Newspaper, href: '/admin/noticias' },
     { label: 'Pontos', description: 'Gerenciar programa de pontos', icon: Star, href: '/admin/pontos' },
+    { label: 'Dia Limite Pontuação', description: 'Definir prazo mensal para pontuação', icon: CalendarDays, href: '/admin/dia-limite' },
     { label: 'Relatórios', description: 'Visualizar relatórios do sistema', icon: BarChart3, href: '/admin/relatorios' },
     { label: 'CAS', description: 'Centro de Administração: usuários, acessos e relatórios', icon: Settings, href: '/admin/cas' },
   ];

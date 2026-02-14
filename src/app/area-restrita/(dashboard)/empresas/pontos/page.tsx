@@ -51,10 +51,11 @@ export default function EmpresaPontosPage() {
     email: '',
   });
 
-  // Verificar se estamos entre dias 1 e 10 do mês
+  // Dia limite dinâmico (buscar do banco)
+  const [diaLimite, setDiaLimite] = useState(10);
   const hoje = new Date();
   const diaAtual = hoje.getDate();
-  const formularioAtivo = diaAtual <= 10;
+  const formularioAtivo = diaAtual <= diaLimite;
 
   // Calcular pontos automaticamente baseado no valor e flag construtora
   const pontosCalculados = useMemo(() => {
@@ -68,7 +69,20 @@ export default function EmpresaPontosPage() {
 
   useEffect(() => {
     fetchPontos();
+    fetchDiaLimite();
   }, []);
+
+  async function fetchDiaLimite() {
+    try {
+      const res = await fetch('/api/cas/configuracoes?chave=dia_limite_pontuacao');
+      const data = await res.json();
+      if (data.config?.valor) {
+        setDiaLimite(parseInt(data.config.valor));
+      }
+    } catch {
+      // Manter padrão 10 se falhar
+    }
+  }
 
   async function fetchPontos() {
     try {
@@ -100,7 +114,7 @@ export default function EmpresaPontosPage() {
     e.preventDefault();
 
     if (!formularioAtivo) {
-      toast.error('Formulário desativado. Disponível apenas entre os dias 1 e 10 de cada mês.');
+      toast.error('Formulário desativado. Disponível apenas entre os dias 1 e ' + diaLimite + ' de cada mês.');
       return;
     }
 
@@ -211,11 +225,11 @@ export default function EmpresaPontosPage() {
         <Clock className={`w-5 h-5 ${formularioAtivo ? 'text-brand-400' : 'text-red-400'}`} />
         <div>
           <p className={`text-sm font-medium ${formularioAtivo ? 'text-brand-300' : 'text-red-300'}`}>
-            Prazo para Pontuar: até o dia 10 de cada mês
+            Prazo para Pontuar: até o dia {diaLimite} de cada mês
           </p>
           {!formularioAtivo && (
             <p className="text-xs text-red-400 mt-1">
-              Formulário desativado. Disponível apenas entre os dias 1 e 10 de cada mês.
+              Formulário desativado. Disponível apenas entre os dias 1 e {diaLimite} de cada mês.
             </p>
           )}
         </div>

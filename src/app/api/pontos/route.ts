@@ -78,12 +78,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Apenas empresas podem registrar pontos' }, { status: 403 });
   }
 
-  // Verificar prazo: formulário disponível apenas entre dias 1 e 10
+  // Verificar prazo dinâmico: buscar dia limite do banco
+  const configDiaLimite = await prisma.configuracao.findUnique({
+    where: { chave: 'dia_limite_pontuacao' },
+  });
+  const diaLimite = configDiaLimite ? parseInt(configDiaLimite.valor) : 10;
+  
   const now = new Date();
   const dia = now.getDate();
-  if (dia > 10) {
+  if (dia > diaLimite) {
     return NextResponse.json(
-      { error: 'Formulário desativado. Disponível apenas entre os dias 1 e 10 de cada mês.' },
+      { error: `Formulário desativado. Disponível apenas entre os dias 1 e ${diaLimite} de cada mês.` },
       { status: 400 }
     );
   }

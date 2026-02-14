@@ -263,3 +263,33 @@ model CasLogAcesso {
 
   @@map("cas_log_acessos")
 }
+
+// ============================================================
+// CONFIGURAÇÕES DO SISTEMA
+// ============================================================
+
+model Configuracao {
+  id        Int       @id @default(autoincrement())
+  chave     String    @unique @db.VarChar(100)
+  valor     String    @db.VarChar(255)
+  descricao String?   @db.VarChar(255)
+  updated_at DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+
+  @@map("configuracoes")
+}
+
+// ============================================================
+// LOG DE ALTERAÇÕES DE CONFIGURAÇÕES
+// ============================================================
+
+model LogConfiguracao {
+  id             Int       @id @default(autoincrement())
+  chave          String    @db.VarChar(100)
+  valor_anterior String?   @db.VarChar(255)
+  valor_novo     String    @db.VarChar(255)
+  usuario_id     Int?
+  usuario_nome   String?   @db.VarChar(255)
+  created_at     DateTime  @default(now()) @db.Timestamp(0)
+
+  @@map("log_configuracoes")
+}
