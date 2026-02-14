@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { Menu, X, ChevronDown, User, LogIn } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
+import { Menu, X, ChevronDown, User, LogIn, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -119,15 +119,24 @@ export default function Header() {
               </div>
             ))}
 
-            <div className="ml-3 pl-3 border-l border-dark-700">
+            <div className="ml-3 pl-3 border-l border-dark-700 flex items-center gap-2">
               {session ? (
-                <Link
-                  href="/area-restrita"
-                  className="btn-ghost text-sm gap-2"
-                >
-                  <User className="w-4 h-4" />
-                  Área Restrita
-                </Link>
+                <>
+                  <Link
+                    href="/area-restrita"
+                    className="btn-ghost text-sm gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    Área Restrita
+                  </Link>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="p-2 rounded-md text-dark-400 hover:text-red-400 hover:bg-dark-700/50 transition-colors"
+                    title="Sair"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </>
               ) : (
                 <Link
                   href="/area-restrita"
@@ -183,14 +192,33 @@ export default function Header() {
                     ))}
                   </div>
                 ))}
-                <div className="pt-3 mt-3 border-t border-dark-700 px-4">
-                  <Link
-                    href="/area-restrita"
-                    className="btn-primary w-full text-sm gap-2"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    {session ? 'Área Restrita' : 'Entrar'}
-                  </Link>
+                <div className="pt-3 mt-3 border-t border-dark-700 px-4 space-y-2">
+                  {session ? (
+                    <>
+                      <Link
+                        href="/area-restrita"
+                        className="btn-primary w-full text-sm gap-2"
+                      >
+                        <User className="w-4 h-4" />
+                        Área Restrita
+                      </Link>
+                      <button
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-medium text-dark-400 hover:text-red-400 hover:bg-dark-700/50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sair
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      href="/area-restrita"
+                      className="btn-primary w-full text-sm gap-2"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      Entrar
+                    </Link>
+                  )}
                 </div>
               </nav>
             </motion.div>

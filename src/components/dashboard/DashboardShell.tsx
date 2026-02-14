@@ -128,13 +128,20 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Mobile header */}
-          <div className="lg:hidden sticky top-20 z-20 bg-dark-900/95 backdrop-blur-md border-b border-dark-700 px-4 py-3">
+          <div className="lg:hidden sticky top-20 z-20 bg-dark-900/95 backdrop-blur-md border-b border-dark-700 px-4 py-3 flex items-center justify-between">
             <button
               onClick={() => setSidebarOpen(true)}
               className="flex items-center gap-2 text-sm text-dark-300 hover:text-white"
             >
               <Menu className="w-5 h-5" />
               Menu
+            </button>
+            <button
+              onClick={() => signOut({ callbackUrl: '/' })}
+              className="flex items-center gap-2 text-sm text-dark-400 hover:text-red-400 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Sair
             </button>
           </div>
 
