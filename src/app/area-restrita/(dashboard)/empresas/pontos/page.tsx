@@ -74,10 +74,10 @@ export default function EmpresaPontosPage() {
 
   async function fetchDiaLimite() {
     try {
-      const res = await fetch('/api/cas/configuracoes?chave=dia_limite_pontuacao');
+      const res = await fetch('/api/pontos/dia-limite');
       const data = await res.json();
-      if (data.config?.valor) {
-        setDiaLimite(parseInt(data.config.valor));
+      if (data.diaLimite) {
+        setDiaLimite(data.diaLimite);
       }
     } catch {
       // Manter padrão 10 se falhar
