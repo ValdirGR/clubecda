@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { Star, Plus, Loader2, Calendar, Building2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import SearchAutocomplete from '@/components/common/SearchAutocomplete';
 
 interface Ponto {
   id: number;
@@ -23,11 +24,15 @@ export default function EmpresaPontosPage() {
   const [showForm, setShowForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
 
+  const [searchType, setSearchType] = useState<'profissional' | 'escritorio'>('profissional');
+  const [selectedLabel, setSelectedLabel] = useState('');
   const [formData, setFormData] = useState({
     id_profissional: '',
     pontos: '',
     valor: '',
     nota: '',
+    nota_fiscal: '',
+    tipo: 'PR' as string,
   });
 
   useEffect(() => {
@@ -59,7 +64,8 @@ export default function EmpresaPontosPage() {
       if (!res.ok) throw new Error('Erro ao registrar pontos');
       toast.success('Pontos registrados com sucesso!');
       setShowForm(false);
-      setFormData({ id_profissional: '', pontos: '', valor: '', nota: '' });
+      setFormData({ id_profissional: '', pontos: '', valor: '', nota: '', nota_fiscal: '', tipo: 'PR' });
+      setSelectedLabel('');
       fetchPontos();
     } catch {
       toast.error('Erro ao registrar pontos');
@@ -100,14 +106,41 @@ export default function EmpresaPontosPage() {
         <div className="glass rounded-xl p-6 animate-slide-down">
           <h3 className="text-lg font-semibold text-white mb-4">Novo Registro de Pontos</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Tipo + Busca */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="form-label">ID Profissional</label>
-                <input
-                  value={formData.id_profissional}
-                  onChange={(e) => setFormData({ ...formData, id_profissional: e.target.value })}
+                <label className="form-label">Tipo *</label>
+                <select
+                  value={searchType}
+                  onChange={(e) => {
+                    const tipo = e.target.value as 'profissional' | 'escritorio';
+                    setSearchType(tipo);
+                    setFormData({ ...formData, id_profissional: '', tipo: tipo === 'profissional' ? 'PR' : 'ES' });
+                    setSelectedLabel('');
+                  }}
                   className="form-input"
-                  placeholder="ID do profissional"
+                >
+                  <option value="profissional">Profissional</option>
+                  <option value="escritorio">Escritório</option>
+                </select>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="form-label">
+                  {searchType === 'profissional' ? 'Profissional *' : 'Escritório *'}
+                </label>
+                <SearchAutocomplete
+                  type={searchType}
+                  value={formData.id_profissional}
+                  selectedLabel={selectedLabel}
+                  onSelect={(result) => {
+                    setFormData({ ...formData, id_profissional: String(result.id) });
+                    setSelectedLabel(result.label);
+                  }}
+                  onClear={() => {
+                    setFormData({ ...formData, id_profissional: '' });
+                    setSelectedLabel('');
+                  }}
+                  placeholder={`Buscar por nome, email ou ID...`}
                 />
               </div>
             </div>
@@ -134,8 +167,8 @@ export default function EmpresaPontosPage() {
               <div>
                 <label className="form-label">Nota Fiscal</label>
                 <input
-                  value={formData.nota}
-                  onChange={(e) => setFormData({ ...formData, nota: e.target.value })}
+                  value={formData.nota_fiscal}
+                  onChange={(e) => setFormData({ ...formData, nota_fiscal: e.target.value })}
                   className="form-input"
                 />
               </div>

@@ -70,11 +70,13 @@ export async function POST(req: NextRequest) {
       pontos,
       valor,
       nota,
+      nota_fiscal,
+      tipo,
     } = data;
 
     if (!pontos || !id_profissional) {
       return NextResponse.json(
-        { error: 'Dados incompletos. Informe pontos e profissional.' },
+        { error: 'Dados incompletos. Informe pontos e profissional/escritório.' },
         { status: 400 }
       );
     }
@@ -83,10 +85,10 @@ export async function POST(req: NextRequest) {
       data: {
         id_empresa: parseInt(session.user.id),
         id_profissional: id_profissional ? parseInt(id_profissional) : null,
-        tipo: 'PR',
+        tipo: tipo || 'PR',
         pontos: pontos ? Number(pontos) : null,
         valor: valor ? parseFloat(valor) : null,
-        nota: nota || null,
+        nota: [nota_fiscal ? `NF: ${nota_fiscal}` : '', nota || ''].filter(Boolean).join(' | ') || null,
         data: new Date(),
       },
     });
