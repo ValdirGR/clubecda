@@ -31,11 +31,7 @@ export function formatCurrency(value: string | number): string {
 }
 
 export function getImageUrl(folder: string, filename: string | null): string {
-  if (!filename) return '/images/placeholder.jpg';
-  const legacyUrl = process.env.NEXT_PUBLIC_LEGACY_IMG_URL;
-  if (legacyUrl) {
-    return `${legacyUrl}/${folder}/${filename}`;
-  }
+  if (!filename) return '/images/placeholder.svg';
   return `/uploads/${folder}/${filename}`;
 }
 

@@ -45,7 +45,7 @@ export default async function OClubePage() {
               <div className="relative">
                 <div className="glass rounded-2xl overflow-hidden aspect-[4/3]">
                   <Image
-                    src={'/images/placeholder.jpg'}
+                    src={'/images/placeholder.svg'}
                     alt="O Clube CDA"
                     fill
                     className="object-cover"
