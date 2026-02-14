@@ -18,28 +18,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [] });
   }
 
+  const pattern = `%${query}%`;
+
   try {
     if (type === 'profissional') {
-      const results = await prisma.profissional.findMany({
-        where: {
-          OR: [
-            { nome: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { cpf: { contains: query, mode: 'insensitive' } },
-            // Search by ID if query is numeric
-            ...(isNaN(Number(query)) ? [] : [{ id: Number(query) }]),
-          ],
-        },
-        select: {
-          id: true,
-          nome: true,
-          email: true,
-          cidade: true,
-          uf: true,
-        },
-        take: 10,
-        orderBy: { nome: 'asc' },
-      });
+      const isNumeric = !isNaN(Number(query));
+      const results = await prisma.$queryRawUnsafe<
+        { id: number; nome: string | null; email: string | null; cidade: string | null; uf: string | null }[]
+      >(
+        isNumeric
+          ? `SELECT id, nome, email, cidade, uf FROM profissionais WHERE nome ILIKE $1 OR email ILIKE $1 OR cpf ILIKE $1 OR id = $2 ORDER BY nome ASC LIMIT 10`
+          : `SELECT id, nome, email, cidade, uf FROM profissionais WHERE nome ILIKE $1 OR email ILIKE $1 OR cpf ILIKE $1 ORDER BY nome ASC LIMIT 10`,
+        pattern,
+        ...(isNumeric ? [Number(query)] : [])
+      );
 
       return NextResponse.json({
         results: results.map((r) => ({
@@ -52,27 +44,16 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === 'escritorio') {
-      const results = await prisma.escritorio.findMany({
-        where: {
-          OR: [
-            { empresa: { contains: query, mode: 'insensitive' } },
-            { nome_fantasia: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { cnpj: { contains: query, mode: 'insensitive' } },
-            ...(isNaN(Number(query)) ? [] : [{ id: Number(query) }]),
-          ],
-        },
-        select: {
-          id: true,
-          empresa: true,
-          nome_fantasia: true,
-          email: true,
-          cidade: true,
-          estado: true,
-        },
-        take: 10,
-        orderBy: { empresa: 'asc' },
-      });
+      const isNumeric = !isNaN(Number(query));
+      const results = await prisma.$queryRawUnsafe<
+        { id: number; empresa: string | null; nome_fantasia: string | null; email: string | null; cidade: string | null; estado: string | null }[]
+      >(
+        isNumeric
+          ? `SELECT id, empresa, nome_fantasia, email, cidade, estado FROM escritorios WHERE empresa ILIKE $1 OR nome_fantasia ILIKE $1 OR email ILIKE $1 OR cnpj ILIKE $1 OR id = $2 ORDER BY empresa ASC LIMIT 10`
+          : `SELECT id, empresa, nome_fantasia, email, cidade, estado FROM escritorios WHERE empresa ILIKE $1 OR nome_fantasia ILIKE $1 OR email ILIKE $1 OR cnpj ILIKE $1 ORDER BY empresa ASC LIMIT 10`,
+        pattern,
+        ...(isNumeric ? [Number(query)] : [])
+      );
 
       return NextResponse.json({
         results: results.map((r) => ({
