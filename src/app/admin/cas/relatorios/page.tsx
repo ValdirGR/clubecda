@@ -54,6 +54,8 @@ interface EscritorioRelatorio {
   escritorioNome: string;
   nomeFantasia?: string;
   totalValor: number;
+  totalValorComIndice: number;
+  totalEmpresas: number;
   totalPontos: number;
   operacoes: Operacao[];
 }
@@ -124,7 +126,7 @@ export default function CasRelatoriosPage() {
     arr.sort((a, b) => {
       let cmp = 0;
       if (sortField === 'nome') cmp = (a.escritorioNome || '').localeCompare(b.escritorioNome || '', 'pt-BR');
-      else if (sortField === 'valor') cmp = a.totalValor - b.totalValor;
+      else if (sortField === 'valor') cmp = a.totalValorComIndice - b.totalValorComIndice;
       else cmp = a.totalPontos - b.totalPontos;
       return sortDir === 'asc' ? cmp : -cmp;
     });
@@ -566,8 +568,14 @@ export default function CasRelatoriosPage() {
                         <th className="px-4 py-3 text-dark-400 font-medium cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('nome')}>
                           Escritório <SortIcon field="nome" />
                         </th>
+                        <th className="px-4 py-3 text-dark-400 font-medium text-right">
+                          Valor (R$)
+                        </th>
                         <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('valor')}>
-                          Valor (R$) <SortIcon field="valor" />
+                          Valor + % <SortIcon field="valor" />
+                        </th>
+                        <th className="px-4 py-3 text-dark-400 font-medium text-center">
+                          Empresas
                         </th>
                         <th className="px-4 py-3 text-dark-400 font-medium text-right cursor-pointer select-none hover:text-white transition-colors" onClick={() => toggleSort('pontos')}>
                           Pontos <SortIcon field="pontos" />
@@ -605,6 +613,12 @@ export default function CasRelatoriosPage() {
                                 {formatCurrency(esc.totalValor)}
                               </td>
                               <td className="px-4 py-3 text-dark-300 text-right">
+                                {formatCurrency(esc.totalValorComIndice)}
+                              </td>
+                              <td className="px-4 py-3 text-dark-300 text-center">
+                                {esc.totalEmpresas}
+                              </td>
+                              <td className="px-4 py-3 text-dark-300 text-right">
                                 {esc.totalPontos.toLocaleString('pt-BR')}
                               </td>
                             </tr>
@@ -630,6 +644,8 @@ export default function CasRelatoriosPage() {
                                   <td className="px-4 py-2 text-dark-400 text-right text-xs">
                                     {formatCurrency(op.valor)}
                                   </td>
+                                  <td className="px-4 py-2" />
+                                  <td className="px-4 py-2" />
                                   <td className="px-4 py-2 text-dark-400 text-right text-xs">
                                     {op.pontos}
                                   </td>
@@ -647,6 +663,12 @@ export default function CasRelatoriosPage() {
                         </td>
                         <td className="px-4 py-3 text-white font-bold text-right">
                           {formatCurrency(resultado.totalGeral?.valor || 0)}
+                        </td>
+                        <td className="px-4 py-3 text-white font-bold text-right">
+                          {formatCurrency(resultado.totalGeral?.valorComIndice || 0)}
+                        </td>
+                        <td className="px-4 py-3 text-white font-bold text-center">
+                          {resultado.totalGeral?.empresas || 0}
                         </td>
                         <td className="px-4 py-3 text-white font-bold text-right">
                           {(resultado.totalGeral?.pontos || 0).toLocaleString('pt-BR')}
