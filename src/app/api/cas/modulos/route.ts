@@ -11,9 +11,19 @@ export async function GET() {
   }
 
   try {
-    const modulos = await prisma.casModulo.findMany({
-      orderBy: { modulo_nome: 'asc' },
+    const allModulos = await prisma.casModulo.findMany({
+      orderBy: [{ modulo_nome: 'asc' }, { modulo_id: 'asc' }],
     });
+
+    // Deduplicate: keep only one entry per (modulo_nome, modulo_nivel)
+    const seen = new Map<string, typeof allModulos[0]>();
+    for (const m of allModulos) {
+      const key = `${m.modulo_nome}|${m.modulo_nivel}`;
+      if (!seen.has(key)) {
+        seen.set(key, m);
+      }
+    }
+    const modulos = Array.from(seen.values());
 
     const modulosUser = modulos.filter((m) => m.modulo_nivel === 'user');
     const modulosAdmin = modulos.filter((m) => m.modulo_nivel === 'admin');

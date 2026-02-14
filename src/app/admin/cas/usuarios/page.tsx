@@ -117,17 +117,26 @@ export default function CasUsuariosPage() {
 
   const openEdit = (user: Usuario) => {
     setEditingId(user.usuario_id);
+
+    // Match by module name (not ID) since legacy data has duplicate module entries
+    const userModuleNames = user.acessos
+      .filter((a) => a.modulo.modulo_nivel === 'user')
+      .map((a) => a.modulo.modulo_nome);
+    const adminModuleNames = user.acessos
+      .filter((a) => a.modulo.modulo_nivel === 'admin')
+      .map((a) => a.modulo.modulo_nome);
+
     setForm({
       nome: user.usuario_nome || '',
       login: user.usuario_user || '',
       senha: '',
       confirmSenha: '',
-      modulosUser: user.acessos
-        .filter((a) => a.modulo.modulo_nivel === 'user')
-        .map((a) => a.modulo_id),
-      modulosAdmin: user.acessos
-        .filter((a) => a.modulo.modulo_nivel === 'admin')
-        .map((a) => a.modulo_id),
+      modulosUser: modulos.modulosUser
+        .filter((m) => userModuleNames.includes(m.modulo_nome))
+        .map((m) => m.modulo_id),
+      modulosAdmin: modulos.modulosAdmin
+        .filter((m) => adminModuleNames.includes(m.modulo_nome))
+        .map((m) => m.modulo_id),
     });
     setShowModal(true);
   };
