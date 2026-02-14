@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+// Forçar rota dinâmica (não cachear)
+export const dynamic = 'force-dynamic';
+
 // GET /api/pontos/dia-limite - Retorna o dia limite de pontuação (público para qualquer usuário logado)
 export async function GET() {
   try {
