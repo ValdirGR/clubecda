@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
-import { Star, Plus, Loader2, AlertTriangle, DollarSign, Clock } from 'lucide-react';
+import { Star, Plus, Loader2, AlertTriangle, DollarSign, Clock, Pencil, Trash2, X } from 'lucide-react';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import SearchAutocomplete from '@/components/common/SearchAutocomplete';
 
@@ -50,6 +50,23 @@ export default function EmpresaPontosPage() {
     telefone: '',
     email: '',
   });
+
+  // Edição
+  const [editingPonto, setEditingPonto] = useState<Ponto | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSearchType, setEditSearchType] = useState<'profissional' | 'escritorio'>('profissional');
+  const [editSelectedLabel, setEditSelectedLabel] = useState('');
+  const [editFormData, setEditFormData] = useState({
+    id_profissional: '',
+    valor: '',
+    tipo: '1',
+    estagio_obra: '',
+    nota: '',
+    cidade: '',
+    telefone: '',
+    email: '',
+  });
+  const [deleteLoading, setDeleteLoading] = useState<number | null>(null);
 
   // Dia limite dinâmico (buscar do banco)
   const [diaLimite, setDiaLimite] = useState(10);
@@ -174,6 +191,93 @@ export default function EmpresaPontosPage() {
     if (tipo === '1' || tipo === 'PR') return 'Profissional';
     if (tipo === '2' || tipo === 'ES') return 'Escritório';
     return tipo || '-';
+  }
+
+  // Verificar se a data do ponto é hoje (permite edição/exclusão)
+  function isHoje(data: string | Date | null | undefined): boolean {
+    if (!data) return false;
+    const d = new Date(data);
+    const hoje = new Date();
+    return (
+      d.getFullYear() === hoje.getFullYear() &&
+      d.getMonth() === hoje.getMonth() &&
+      d.getDate() === hoje.getDate()
+    );
+  }
+
+  // Pontos calculados para edição
+  const editPontosCalculados = useMemo(() => {
+    const valor = parseFloat(editFormData.valor);
+    if (isNaN(valor) || valor <= 0) return 0;
+    const divisor = empresa?.construtora === 's' ? 400 : 100;
+    return valor / divisor;
+  }, [editFormData.valor, empresa?.construtora]);
+
+  // Abrir modal de edição
+  function handleEdit(ponto: Ponto) {
+    const tipo = ponto.tipo === '2' || ponto.tipo === 'ES' ? 'escritorio' : 'profissional';
+    setEditSearchType(tipo as 'profissional' | 'escritorio');
+    setEditSelectedLabel(`#${ponto.id_profissional}`);
+    setEditFormData({
+      id_profissional: String(ponto.id_profissional || ''),
+      valor: String(ponto.valor || ''),
+      tipo: ponto.tipo || '1',
+      estagio_obra: ponto.estagio_obra || '',
+      nota: ponto.nota || '',
+      cidade: ponto.cidade || '',
+      telefone: ponto.telefone || '',
+      email: ponto.email || '',
+    });
+    setEditingPonto(ponto);
+  }
+
+  // Submeter edição
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingPonto) return;
+
+    if (!editFormData.id_profissional || !editFormData.valor || !editFormData.estagio_obra || !editFormData.nota) {
+      toast.error('Preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      const res = await fetch(`/api/pontos/${editingPonto.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editFormData),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Erro ao editar ponto');
+      toast.success('Ponto editado com sucesso!');
+      setEditingPonto(null);
+      fetchPontos();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao editar ponto';
+      toast.error(message);
+    } finally {
+      setEditLoading(false);
+    }
+  }
+
+  // Excluir ponto
+  async function handleDelete(pontoId: number) {
+    if (!confirm('Tem certeza que deseja excluir este ponto? Esta ação não pode ser desfeita.')) return;
+
+    setDeleteLoading(pontoId);
+    try {
+      const res = await fetch(`/api/pontos/${pontoId}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Erro ao excluir ponto');
+      toast.success('Ponto excluído com sucesso!');
+      fetchPontos();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao excluir ponto';
+      toast.error(message);
+    } finally {
+      setDeleteLoading(null);
+    }
   }
 
   return (
@@ -398,6 +502,144 @@ export default function EmpresaPontosPage() {
         </div>
       )}
 
+      {/* Modal de Edição */}
+      {editingPonto && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="glass rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Editar Ponto #{editingPonto.id}</h3>
+              <button onClick={() => setEditingPonto(null)} className="text-dark-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="form-label">Profissional/Escritório *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <select
+                    value={editSearchType}
+                    onChange={(e) => {
+                      const tipo = e.target.value as 'profissional' | 'escritorio';
+                      setEditSearchType(tipo);
+                      setEditFormData({ ...editFormData, id_profissional: '', tipo: tipo === 'profissional' ? '1' : '2' });
+                      setEditSelectedLabel('');
+                    }}
+                    className="form-input"
+                  >
+                    <option value="profissional">Profissional</option>
+                    <option value="escritorio">Escritório</option>
+                  </select>
+                  <div className="sm:col-span-2">
+                    <SearchAutocomplete
+                      type={editSearchType}
+                      value={editFormData.id_profissional}
+                      selectedLabel={editSelectedLabel}
+                      onSelect={(result) => {
+                        setEditFormData({ ...editFormData, id_profissional: String(result.id) });
+                        setEditSelectedLabel(result.label);
+                      }}
+                      onClear={() => {
+                        setEditFormData({ ...editFormData, id_profissional: '' });
+                        setEditSelectedLabel('');
+                      }}
+                      placeholder="Buscar por nome, email ou ID..."
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Valor NF *</label>
+                  <input
+                    value={editFormData.valor}
+                    onChange={(e) => {
+                      if (e.target.value.includes(',')) {
+                        toast.error('Use ponto, não vírgula! Ex: 10500.50');
+                        return;
+                      }
+                      setEditFormData({ ...editFormData, valor: e.target.value });
+                    }}
+                    className="form-input"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Pontos (auto)</label>
+                  <input
+                    value={editPontosCalculados > 0 ? editPontosCalculados.toFixed(2) : '0'}
+                    className="form-input bg-dark-700/50 cursor-not-allowed"
+                    readOnly
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="form-label">Estágio da Obra *</label>
+                <select
+                  value={editFormData.estagio_obra}
+                  onChange={(e) => setEditFormData({ ...editFormData, estagio_obra: e.target.value })}
+                  className="form-input"
+                  required
+                >
+                  <option value="">Selecione...</option>
+                  <option value="CONSTRUCAO">CONSTRUÇÃO</option>
+                  <option value="REFORMA">REFORMA</option>
+                  <option value="DECORACAO">DECORAÇÃO</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Nome Cliente NF *</label>
+                <input
+                  value={editFormData.nota}
+                  onChange={(e) => setEditFormData({ ...editFormData, nota: e.target.value })}
+                  className="form-input"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Cidade Cliente</label>
+                  <input
+                    value={editFormData.cidade}
+                    onChange={(e) => setEditFormData({ ...editFormData, cidade: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Telefone Cliente</label>
+                  <input
+                    value={editFormData.telefone}
+                    onChange={(e) => setEditFormData({ ...editFormData, telefone: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="form-label">E-mail do Cliente</label>
+                <input
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                  className="form-input"
+                  type="email"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button type="submit" disabled={editLoading} className="btn-primary gap-2">
+                  {editLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
+                  Salvar Alterações
+                </button>
+                <button type="button" onClick={() => setEditingPonto(null)} className="btn-ghost">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Tabela de pontos */}
       <div className="glass rounded-xl overflow-hidden">
         <div className="p-4 border-b border-dark-700">
@@ -413,41 +655,77 @@ export default function EmpresaPontosPage() {
                 <th className="px-4 py-3 text-dark-400 font-medium">Pontos</th>
                 <th className="px-4 py-3 text-dark-400 font-medium">Nota (Cliente)</th>
                 <th className="px-4 py-3 text-dark-400 font-medium">Data</th>
+                <th className="px-4 py-3 text-dark-400 font-medium">Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-dark-400">
+                  <td colSpan={7} className="px-4 py-8 text-center text-dark-400">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : pontos.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-dark-400">
+                  <td colSpan={7} className="px-4 py-8 text-center text-dark-400">
                     Nenhum ponto registrado.
                   </td>
                 </tr>
               ) : (
-                pontos.map((p, index) => (
-                  <tr
-                    key={p.id}
-                    className={`border-b border-dark-800 hover:bg-dark-700/30 ${
-                      index % 2 === 0 ? 'bg-dark-800/20' : ''
-                    }`}
-                  >
-                    <td className="px-4 py-3 text-dark-300">{p.id}</td>
-                    <td className="px-4 py-3 text-dark-300">{getTipoLabel(p.tipo)}</td>
-                    <td className="px-4 py-3 text-dark-300">
-                      {p.valor != null ? formatCurrency(Number(p.valor)) : '-'}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-brand-400">{Number(p.pontos)}</td>
-                    <td className="px-4 py-3 text-dark-300 truncate max-w-[200px]">
-                      {p.nota || '-'}
-                    </td>
-                    <td className="px-4 py-3 text-dark-300">{formatDate(p.data || null)}</td>
-                  </tr>
-                ))
+                pontos.map((p, index) => {
+                  const podeMudar = isHoje(p.data);
+                  return (
+                    <tr
+                      key={p.id}
+                      className={`border-b border-dark-800 hover:bg-dark-700/30 ${
+                        index % 2 === 0 ? 'bg-dark-800/20' : ''
+                      }`}
+                    >
+                      <td className="px-4 py-3 text-dark-300">{p.id}</td>
+                      <td className="px-4 py-3 text-dark-300">{getTipoLabel(p.tipo)}</td>
+                      <td className="px-4 py-3 text-dark-300">
+                        {p.valor != null ? formatCurrency(Number(p.valor)) : '-'}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-brand-400">{Number(p.pontos)}</td>
+                      <td className="px-4 py-3 text-dark-300 truncate max-w-[200px]">
+                        {p.nota || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-dark-300">{formatDate(p.data || null)}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleEdit(p)}
+                            disabled={!podeMudar}
+                            title={podeMudar ? 'Editar ponto' : 'Edição permitida somente no dia da criação'}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              podeMudar
+                                ? 'text-blue-400 hover:bg-blue-400/10 hover:text-blue-300'
+                                : 'text-dark-600 cursor-not-allowed'
+                            }`}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(p.id)}
+                            disabled={!podeMudar || deleteLoading === p.id}
+                            title={podeMudar ? 'Excluir ponto' : 'Exclusão permitida somente no dia da criação'}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              podeMudar
+                                ? 'text-red-400 hover:bg-red-400/10 hover:text-red-300'
+                                : 'text-dark-600 cursor-not-allowed'
+                            }`}
+                          >
+                            {deleteLoading === p.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

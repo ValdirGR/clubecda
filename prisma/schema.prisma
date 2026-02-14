@@ -119,6 +119,23 @@ model Ponto {
 }
 
 // ============================================================
+// LOG DE ALTERAÇÕES DE PONTOS
+// ============================================================
+
+model LogPonto {
+  id             Int       @id @default(autoincrement())
+  ponto_id       Int
+  acao           String    @db.VarChar(20) // EDITAR, EXCLUIR
+  dados_anterior String?   @db.Text        // JSON com dados antes da alteração
+  dados_novo     String?   @db.Text        // JSON com dados após alteração
+  usuario_id     Int?
+  usuario_nome   String?   @db.VarChar(255)
+  created_at     DateTime  @default(now()) @db.Timestamp(0)
+
+  @@map("log_pontos")
+}
+
+// ============================================================
 // SHOWROOM & PROMOÇÕES
 // ============================================================
 
