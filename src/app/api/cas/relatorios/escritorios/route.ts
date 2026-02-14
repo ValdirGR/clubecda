@@ -85,8 +85,9 @@ function calcularPontuacaoEscritorio(
         data: p.data,
         empresaId: p.id_empresa,
         empresaNome: p.empresaNome,
-        valor: p.valor, // valor original (sem ajuste construtora)
-        pontos: Number(p.valor) || 0,
+        valor: p.valor,                             // valor original
+        valorAjustado: Math.round(valor * 100) / 100, // valor após ajuste construtora
+        construtora: p.construtora === 's',
         nota: p.nota,
       });
     }

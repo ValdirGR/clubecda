@@ -624,7 +624,7 @@ export default function CasRelatoriosPage() {
                             </tr>
                             {nivelDetalhe === 'detalhado' &&
                               expandedRows.has(esc.escritorioId) &&
-                              esc.operacoes.map((op) => (
+                              esc.operacoes.map((op: any) => (
                                 <tr
                                   key={`op-${op.id}`}
                                   className="bg-dark-800/50 border-b border-dark-800/30"
@@ -640,15 +640,23 @@ export default function CasRelatoriosPage() {
                                     <span className="text-dark-300">
                                       {op.empresaNome}
                                     </span>
+                                    {op.construtora && (
+                                      <span className="ml-1 px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-[10px] font-medium">
+                                        CONSTRUTORA
+                                      </span>
+                                    )}
                                   </td>
                                   <td className="px-4 py-2 text-dark-400 text-right text-xs">
-                                    {formatCurrency(op.valor)}
+                                    {formatCurrency(op.valorAjustado ?? op.valor)}
+                                    {op.construtora && (
+                                      <span className="block text-[10px] text-dark-500 line-through">
+                                        {formatCurrency(op.valor)}
+                                      </span>
+                                    )}
                                   </td>
                                   <td className="px-4 py-2" />
                                   <td className="px-4 py-2" />
-                                  <td className="px-4 py-2 text-dark-400 text-right text-xs">
-                                    {op.pontos}
-                                  </td>
+                                  <td className="px-4 py-2" />
                                 </tr>
                               ))}
                           </>
