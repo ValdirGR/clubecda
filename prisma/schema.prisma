@@ -136,6 +136,20 @@ model LogPonto {
 }
 
 // ============================================================
+// TABELA DE MULTIPLICADORES DE BÔNUS (Índice por empresas únicas/mês)
+// ============================================================
+
+model BonusMultiplier {
+  id            Int      @id @default(autoincrement())
+  range_min     Int
+  range_max     Int?     // NULL = sem limite superior (ex: 20+)
+  multiplier    Decimal  @db.Decimal(4, 2)
+  bonus_percent Int      @default(0)
+
+  @@map("bonus_multipliers")
+}
+
+// ============================================================
 // SHOWROOM & PROMOÇÕES
 // ============================================================
 
