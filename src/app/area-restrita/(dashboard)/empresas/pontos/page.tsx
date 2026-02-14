@@ -295,7 +295,7 @@ export default function EmpresaPontosPage() {
                     </button>
                   </div>
                 </div>
-              ), { duration: 10000 });
+              ), { duration: 10000, position: 'top-center', style: { maxWidth: '400px', marginTop: '30vh' } });
             }}
           >
             Sim, excluir
@@ -308,7 +308,7 @@ export default function EmpresaPontosPage() {
           </button>
         </div>
       </div>
-    ), { duration: 10000 });
+    ), { duration: 10000, position: 'top-center', style: { maxWidth: '400px', marginTop: '30vh' } });
   }
 
   async function executeDelete(pontoId: number) {
