@@ -13,6 +13,7 @@ import {
   Settings,
   BarChart3,
   CalendarDays,
+  Percent,
 } from 'lucide-react';
 
 export default async function AdminDashboard() {
@@ -44,6 +45,7 @@ export default async function AdminDashboard() {
     { label: 'Pontos', description: 'Gerenciar programa de pontos', icon: Star, href: '/admin/pontos' },
     { label: 'Dia Limite Pontuação', description: 'Definir prazo mensal para pontuação', icon: CalendarDays, href: '/admin/dia-limite' },
     { label: 'Relatórios', description: 'Visualizar relatórios do sistema', icon: BarChart3, href: '/admin/relatorios' },
+    { label: 'Bônus Multiplicadores', description: 'Gerenciar faixas de índice multiplicador', icon: Percent, href: '/admin/bonus-multipliers' },
     { label: 'CAS', description: 'Centro de Administração: usuários, acessos e relatórios', icon: Settings, href: '/admin/cas' },
   ];
 
