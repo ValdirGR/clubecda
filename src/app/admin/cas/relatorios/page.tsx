@@ -20,8 +20,19 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  FileSpreadsheet,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+  exportEmpresasPDF,
+  exportEscritoriosPDF,
+  exportProfissionaisPDF,
+  exportGeralPDF,
+  exportEmpresasXLS,
+  exportEscritoriosXLS,
+  exportProfissionaisXLS,
+  exportGeralXLS,
+} from '@/lib/exportRelatorios';
 
 type TipoRelatorio = 'empresas' | 'escritorios' | 'profissionais' | 'geral';
 type NivelDetalhe = 'detalhado' | 'simplificado';
@@ -391,6 +402,48 @@ export default function CasRelatoriosPage() {
           </div>
 
           <div className="flex items-center justify-end gap-3">
+            {resultado && (
+              <>
+                <button
+                  onClick={() => {
+                    const periodo = `${dataInicio}_a_${dataFim}`;
+                    try {
+                      if (tipoRelatorio === 'empresas') exportEmpresasPDF(resultado, periodo, nivelDetalhe === 'detalhado');
+                      else if (tipoRelatorio === 'escritorios') exportEscritoriosPDF(resultado, periodo, nivelDetalhe === 'detalhado');
+                      else if (tipoRelatorio === 'profissionais') exportProfissionaisPDF(resultado, periodo, nivelDetalhe === 'detalhado');
+                      else exportGeralPDF(resultado, periodo);
+                      toast.success('PDF exportado!');
+                    } catch (err) {
+                      console.error(err);
+                      toast.error('Erro ao exportar PDF');
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-red-600/80 text-white rounded-lg font-medium text-sm hover:bg-red-500 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  PDF
+                </button>
+                <button
+                  onClick={() => {
+                    const periodo = `${dataInicio}_a_${dataFim}`;
+                    try {
+                      if (tipoRelatorio === 'empresas') exportEmpresasXLS(resultado, periodo, nivelDetalhe === 'detalhado');
+                      else if (tipoRelatorio === 'escritorios') exportEscritoriosXLS(resultado, periodo, nivelDetalhe === 'detalhado');
+                      else if (tipoRelatorio === 'profissionais') exportProfissionaisXLS(resultado, periodo, nivelDetalhe === 'detalhado');
+                      else exportGeralXLS(resultado, periodo);
+                      toast.success('Excel exportado!');
+                    } catch (err) {
+                      console.error(err);
+                      toast.error('Erro ao exportar Excel');
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-green-600/80 text-white rounded-lg font-medium text-sm hover:bg-green-500 transition-colors"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Excel
+                </button>
+              </>
+            )}
             <button
               onClick={gerarRelatorio}
               disabled={loading}
